@@ -1,0 +1,10 @@
+# List of paths ignored by Git.
+# Copyright (c) 2024, the Swatantra Foundation.
+# Provided under the BSD 3-Clause license.
+
+.vs/
+.vscode/
+/LibreCraft
+*.o
+*.exe
+*.dll
