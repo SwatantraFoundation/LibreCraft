@@ -12,9 +12,11 @@
 #include "shader.h"
 #include "texture.h"
 
+/* TODO: These will not always be constant */
 #define N_VERTICES  4
 #define N_INSTANCES 2
 
+/* Shader program attribute locations */
 #define ATTR_MODEL_POS       0
 #define ATTR_MODEL_TEX_COORD 1
 #define ATTR_INST_DATA       2
@@ -25,10 +27,10 @@ static GLint proj_location, view_location;
 static struct camera camera;
 
 static float vertices[] = {
-    -0.5f, 0.5f, -0.5f, 0.0f, 0.0f,
-    -0.5f, 0.5f, 0.5f, 0.0f, 1.0f,
-    0.5f, 0.5f, -0.5f, 1.0f, 0.0f,
-    0.5f, 0.5f, 0.5f, 1.0f, 1.0f
+    -0.5f,  0.5f, -0.5f, 0.0f, 0.0f,
+    -0.5f,  0.5f,  0.5f, 0.0f, 1.0f,
+     0.5f,  0.5f, -0.5f, 1.0f, 0.0f,
+     0.5f,  0.5f,  0.5f, 1.0f, 1.0f
 };
 static GLuint instances[N_INSTANCES] = {
     0x00000000,
@@ -67,8 +69,14 @@ renderer_shutdown(void)
 
     camera_destroy(&camera);
 
-    if (!program) {
+    if (texture) {
+        glDeleteTextures(1, &texture);
+        texture = 0;
+    }
+
+    if (program) {
         glDeleteProgram(program);
+        program = 0;
     }
 }
 
@@ -117,7 +125,11 @@ renderer_init(float fov, float aspect)
         return false;
     }
 
-    camera_init(&camera, fov, aspect);
+    if (!camera_init(&camera, fov, aspect)) {
+        glDeleteProgram(program);
+        return false;
+    }
+
     camera_translate(&camera, 0.0f, -1.62f, 3.0f);
 
     create_buffers();

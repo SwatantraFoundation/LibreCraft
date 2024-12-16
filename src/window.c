@@ -42,6 +42,8 @@ window_loop(void)
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    debug("Event/render loop terminated\n");
 }
 
 bool
@@ -68,6 +70,7 @@ window_init(int width, int height, const char *title)
     window = glfwCreateWindow(width, height, title, NULL, NULL);
     if (window == NULL) {
         error("Failed to create GLFW window\n");
+        glfwTerminate();
         return false;
     }
 

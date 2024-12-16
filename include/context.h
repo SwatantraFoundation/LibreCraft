@@ -12,6 +12,6 @@
 #define CONTEXT_VERSION_MAJOR 3
 #define CONTEXT_VERSION_MINOR 3
 
-bool context_init(int width, int height);
+bool context_init(int width, int height, int vsync);
 
 #endif /* !_CONTEXT_H */

@@ -16,15 +16,16 @@ load_texture_array(const char *filename)
     void *data;
     GLuint tex;
 
-    debug("Loading texture \"%s\" as array...\n", filename);
+    debug("Loading texture array \"%s\"...\n", filename);
 
+    /* Load and decode the image */
     data = stbi_load(filename, &width, &height, &channels, 0);
     if (data == NULL) {
-        error("Failed to load \"%s\"\n");
+        error("Failed to load texture file \"%s\"\n");
         return 0;
     }
 
-    /* Create and setup texture */
+    /* Create texture and set parameters */
     glGenTextures(1, &tex);
     glBindTexture(GL_TEXTURE_2D_ARRAY, tex);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -32,8 +33,11 @@ load_texture_array(const char *filename)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    /* Send texture data to GPU */
+    /* Send texture data to GPU and generate mipmaps */
     glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGB, width, 16, height / 16, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 
+    /* Free texture data on CPU */
+    stbi_image_free(data);
     return tex;
 }

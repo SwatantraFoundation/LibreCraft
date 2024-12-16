@@ -12,13 +12,19 @@
 extern GLFWwindow *window;
 
 bool
-context_init(int width, int height)
+context_init(int width, int height, int vsync)
 {
     debug("Initializing context...\n");
 
-    glfwMakeContextCurrent(window);
-    glfwSwapInterval(1);
+    if (window == NULL) {
+        error("Failed to initialize context: window is NULL\n");
+        return false;
+    }
 
+    glfwMakeContextCurrent(window);
+    glfwSwapInterval(vsync);
+
+    /* Load OpenGL symbols */
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         error("Failed to load OpenGL with GLAD\n");
         return false;

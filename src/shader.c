@@ -4,8 +4,10 @@
  * Provided under the BSD 3-Clause license.
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "log.h"
 #include "shader.h"
 
@@ -13,32 +15,55 @@ static char *
 load_source(const char *filename)
 {
     FILE *fp;
-    size_t size;
+    long size;
     char* buf;
 
+    /* Open the file */
     fp = fopen(filename, "rb");
     if (fp == NULL) {
-        perror(filename);
+        error("Failed to open file \"%s\": %s\n", filename, strerror(errno));
         return NULL;
     }
 
-    fseek(fp, 0, SEEK_END);
-    size = (size_t)ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-    if (size < 1) {
+    if (fseek(fp, 0, SEEK_END) != 0) {
+        error("Failed to seek to the end of file \"%s\": %s\n", filename, strerror(errno));
         fclose(fp);
         return NULL;
     }
 
+    /* Get the position to determine the file's size */
+    size = ftell(fp);
+    if (size < 0) {
+        error("Failed to get the size of file \"%s\": %s\n", filename, strerror(errno));
+        fclose(fp);
+        return NULL;
+    }
+
+    if (fseek(fp, 0, SEEK_SET) != 0) {
+        error("Failed to rewind to the beginning of file \"%s\": %s\n", filename, strerror(errno));
+        fclose(fp);
+        return NULL;
+    }
+
+    /* Allocate enough space for file and NULL terminator */
     buf = malloc(size + 1);
-    if (fread(buf, 1, size, fp) != size) {
+    if (buf == NULL) {
+        error("Failed to allocate buffer for file \"%s\"\n", filename);
+        fclose(fp);
+        return NULL;
+    }
+
+    if (fread(buf, 1, (size_t)size, fp) != (size_t)size) {
+        error("Failed to read entirety of file \"%s\"\n", filename);
         free(buf);
         fclose(fp);
         return NULL;
     }
 
-    fclose(fp);
+    /* Terminate the buffer */
     buf[size] = '\0';
+
+    fclose(fp);
     return buf;
 }
 
@@ -64,6 +89,7 @@ compile_shader(GLenum type, const char *source)
 
     shader = glCreateShader(type);
     if (!shader) {
+        error("Failed to create shader of type %d\n", type);
         return 0;
     }
 
@@ -76,10 +102,17 @@ compile_shader(GLenum type, const char *source)
 
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_len);
         log = malloc(log_len + 1);
+        if (log == NULL) {
+            error("Failed to compile shader\n");
+            glDeleteShader(shader);
+            return 0;
+        }
+
         glGetShaderInfoLog(shader, log_len, NULL, log);
         error("Failed to compile shader: %s\n", log);
         free(log);
 
+        glDeleteShader(shader);
         return 0;
     }
 
@@ -115,7 +148,13 @@ link_shader_program(const char *vert_source, const char *frag_source)
     glAttachShader(program, vert_shader);
     glAttachShader(program, frag_shader);
 
+    /* Link program and delete unneeded individual shaders */
     glLinkProgram(program);
+    glDetachShader(program, frag_shader);
+    glDetachShader(program, vert_shader);
+    glDeleteShader(frag_shader);
+    glDeleteShader(vert_shader);
+
     glGetProgramiv(program, GL_LINK_STATUS, &status);
     if (!status) {
         GLsizei log_len;
@@ -123,18 +162,19 @@ link_shader_program(const char *vert_source, const char *frag_source)
 
         glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_len);
         log = malloc(log_len + 1);
+        if (log == NULL) {
+            error("Failed to link shader program\n");
+            glDeleteProgram(program);
+            return 0;
+        }
+
         glGetProgramInfoLog(program, log_len, NULL, log);
         error("Failed to link shader program: %s\n", log);
         free(log);
 
         glDeleteProgram(program);
-        glDeleteShader(frag_shader);
-        glDeleteShader(vert_shader);
         return 0;
     }
-
-    glDetachShader(program, frag_shader);
-    glDetachShader(program, vert_shader);
 
     return program;
 }

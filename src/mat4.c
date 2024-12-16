@@ -8,7 +8,7 @@
 #include <string.h>
 #include "mat4.h"
 
-static float identity[] = {
+static const float identity[] = {
     1.0f, 0.0f, 0.0f, 0.0f,
     0.0f, 1.0f, 0.0f, 0.0f,
     0.0f, 0.0f, 1.0f, 0.0f,
@@ -19,6 +19,10 @@ void
 mat4_perspective(mat4_t mat, float fovy, float aspect, float near, float far)
 {
     float f, fn;
+
+    if (mat == NULL) {
+        return;
+    }
 
     f = 1.0f / tanf(fovy * 0.5f);
     fn = 1.0f / (near - far);
@@ -34,55 +38,39 @@ mat4_perspective(mat4_t mat, float fovy, float aspect, float near, float far)
 void
 mat4_rotate(mat4_t mat, float x, float y, float z)
 {
-    float cos_x, sin_x, cos_y, sin_y, a00, a01, a02, a03, a20, a21, a22, a23;
-
+    (void)mat;
+    (void)x;
+    (void)y;
     (void)z;
 
-    cos_x = cosf(x);
+/*
+    TODO: Do this the right way.
+
+    float sin_x, cos_x, sin_y, cos_y, sin_z, cos_z;
+
+    if (mat == NULL) {
+        return;
+    }
+
     sin_x = sinf(x);
-    cos_y = cosf(y);
+    cos_x = cosf(x);
     sin_y = sinf(y);
+    cos_y = cosf(y);
+    sin_z = sinf(z);
+    cos_z = cosf(z);
 
-    a00 = mat[4];
-    a01 = mat[5];
-    a02 = mat[6];
-    a03 = mat[7];
-    a20 = mat[8];
-    a21 = mat[9];
-    a22 = mat[10];
-    a23 = mat[11];
-
-    mat[4] = a00 * cos_x + a20 * sin_x;
-    mat[5] = a01 * cos_x + a21 * sin_x;
-    mat[6] = a02 * cos_x + a22 * sin_x;
-    mat[7] = a03 * cos_x + a23 * sin_x;
-    mat[8] = a20 * cos_x - a00 * sin_x;
-    mat[9] = a21 * cos_x - a01 * sin_x;
-    mat[10] = a22 * cos_x - a02 * sin_x;
-    mat[11] = a23 * cos_x - a03 * sin_x;
-
-    a00 = mat[0];
-    a01 = mat[1];
-    a02 = mat[2];
-    a03 = mat[3];
-    a20 = mat[8];
-    a21 = mat[9];
-    a22 = mat[10];
-    a23 = mat[11];
-
-    mat[0] = a00 * cos_y - a20 * sin_y;
-    mat[1] = a01 * cos_y - a21 * sin_y;
-    mat[2] = a02 * cos_y - a22 * sin_y;
-    mat[3] = a03 * cos_y - a23 * sin_y;
-    mat[8] = a00 * sin_y + a20 * cos_y;
-    mat[9] = a01 * sin_y + a21 * cos_y;
-    mat[10] = a02 * sin_y + a22 * cos_y;
-    mat[11] = a03 * sin_y + a23 * cos_y;
+    mat[0] *= cos_y * (cos_z - sin_z);
+    mat[1] *= cos_y;
+*/
 }
 
 void
 mat4_translate(mat4_t mat, float x, float y, float z)
 {
+    if (mat == NULL) {
+        return;
+    }
+
     mat[12] += mat[0] * x + mat[4] * y + mat[8] * z;
     mat[13] += mat[1] * x + mat[5] * y + mat[9] * z;
     mat[14] += mat[2] * x + mat[6] * y + mat[10] * z;
@@ -92,5 +80,7 @@ mat4_translate(mat4_t mat, float x, float y, float z)
 void
 mat4_identity(mat4_t mat)
 {
-    memcpy(mat, identity, SIZEOF_MAT4);
+    if (mat != NULL) {
+        memcpy(mat, identity, SIZEOF_MAT4);
+    }
 }
